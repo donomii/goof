@@ -1,15 +1,32 @@
 package goof
 
 import (
-	"io"
-	"os"
-	"strings"
-
 	"bytes"
 	"crypto/md5"
 	"encoding/hex"
+
+	"io"
+	"os"
 	"os/exec"
+	"strings"
 )
+
+func IsDirr(pth string) (bool, error) {
+	fi, err := os.Stat(pth)
+	if err != nil {
+		return false, err
+	}
+
+	return fi.Mode().IsDir(), nil
+}
+
+func IsDir(path string) bool {
+	f, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return f != nil && f.IsDir()
+}
 
 func Hash_file_md5(filePath string) (string, error) {
 	//Initialize variable returnMD5String now in case an error has to be returned
