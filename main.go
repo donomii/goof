@@ -4,12 +4,35 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/hex"
+	"io/ioutil"
+	"path/filepath"
 
 	"io"
 	"os"
 	"os/exec"
 	"strings"
 )
+
+//List all files in a directory, and recursively in its subdirectories
+func LslR(dir string) []string {
+	out := []string{}
+	walkHandler := func(path string, info os.FileInfo, err error) error {
+		out = append(out, path)
+		return nil
+	}
+	filepath.Walk(dir, walkHandler)
+	return out
+}
+
+//List all files in a directory
+func Ls(dir string) []string {
+	out := []string{".."}
+	files, _ := ioutil.ReadDir(".")
+	for _, f := range files {
+		out = append(out, f.Name())
+	}
+	return out
+}
 
 func IsDirr(pth string) (bool, error) {
 	fi, err := os.Stat(pth)
@@ -107,8 +130,28 @@ func Grep(search, str string) string {
 	var out string
 	strs := strings.Split(str, "\n")
 	for _, v := range strs {
-		if strings.Index(v, search) == 0 {
+		if strings.Index(v, search) > -1 {
 			out = out + v + "\n"
+		}
+	}
+	return out
+}
+
+func ListGrep(search string, strs []string) []string {
+	var out = []string{}
+	for _, v := range strs {
+		if strings.Index(v, search) > -1 {
+			out = append(out, v)
+		}
+	}
+	return out
+}
+
+func ListGrepInv(search string, strs []string) []string {
+	var out = []string{}
+	for _, v := range strs {
+		if strings.Index(v, search) == -1 {
+			out = append(out, v)
 		}
 	}
 	return out
