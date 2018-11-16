@@ -140,7 +140,7 @@ func Grep(search, str string) string {
 func ListGrep(search string, strs []string) []string {
 	var out = []string{}
 	for _, v := range strs {
-		if strings.Index(v, search) > -1 {
+		if strings.Index(strings.ToLower(v), strings.ToLower(search)) > -1 {
 			out = append(out, v)
 		}
 	}
@@ -150,7 +150,7 @@ func ListGrep(search string, strs []string) []string {
 func ListGrepInv(search string, strs []string) []string {
 	var out = []string{}
 	for _, v := range strs {
-		if strings.Index(v, search) == -1 {
+		if strings.Index(strings.ToLower(v), strings.ToLower(search)) == -1 {
 			out = append(out, v)
 		}
 	}
