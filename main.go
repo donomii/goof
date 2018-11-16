@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/hex"
-	"io/ioutil"
-	"path/filepath"
-
 	"io"
+	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -114,6 +114,7 @@ func QCI(strs []string) {
 }
 
 func Command(cmd string, args []string) string {
+	log.Printf("Running '%v', '%v'", cmd, args)
 	out, err := exec.Command(cmd, args...).CombinedOutput()
 	if err != nil {
 		//fmt.Fprintf(os.Stderr, "IO> %v\n", string(out))
