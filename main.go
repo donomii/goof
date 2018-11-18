@@ -13,6 +13,20 @@ import (
 	"strings"
 )
 
+func AppendStringToFile(path, text string) error {
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	_, err = f.WriteString(text)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 //List all files in a directory, and recursively in its subdirectories
 func LslR(dir string) []string {
 	out := []string{}
