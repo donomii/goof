@@ -13,6 +13,14 @@ import (
 	"strings"
 )
 
+func Exists(path string) bool {
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		return true
+	} else {
+		return false
+	}
+}
+
 func AppendStringToFile(path, text string) error {
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	if err != nil {
