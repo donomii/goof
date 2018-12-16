@@ -13,6 +13,14 @@ import (
 	"strings"
 )
 
+func CatFile(path string) []byte {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	return data
+}
+
 func Exists(path string) bool {
 	if _, err := os.Stat(path); !os.IsNotExist(err) {
 		return true
