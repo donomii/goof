@@ -13,6 +13,7 @@ import (
 	"strings"
 )
 
+//Does this file or directory exist?
 func Exists(path string) bool {
 	if _, err := os.Stat(path); !os.IsNotExist(err) {
 		return true
@@ -21,6 +22,7 @@ func Exists(path string) bool {
 	}
 }
 
+//Write text to the end of a file.  Note that the file is opened and closed on each call.
 func AppendStringToFile(path, text string) error {
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
@@ -56,6 +58,7 @@ func Ls(dir string) []string {
 	return out
 }
 
+//Is this path a directory?  Return error if error occurs (e.g. does not exist)
 func IsDirr(pth string) (bool, error) {
 	fi, err := os.Stat(pth)
 	if err != nil {
@@ -65,6 +68,7 @@ func IsDirr(pth string) (bool, error) {
 	return fi.Mode().IsDir(), nil
 }
 
+//Is this path a directory?  Any error results in false
 func IsDir(path string) bool {
 	f, err := os.Stat(path)
 	if err != nil {
@@ -73,6 +77,7 @@ func IsDir(path string) bool {
 	return f != nil && f.IsDir()
 }
 
+//Calculate the MD5sum of a file
 func Hash_file_md5(filePath string) (string, error) {
 	//Initialize variable returnMD5String now in case an error has to be returned
 	var returnMD5String string
@@ -104,6 +109,7 @@ func Hash_file_md5(filePath string) (string, error) {
 
 }
 
+//Run a command, wait for it to finish and then return stdout
 func QuickCommand(cmd *exec.Cmd) string {
 	in := strings.NewReader("")
 	cmd.Stdin = in
@@ -118,11 +124,15 @@ func QuickCommand(cmd *exec.Cmd) string {
 	return ret
 }
 
+//Run a command.  The first element is the path to the executable, the rest are program arguments.  Returns stdout
 func QC(strs []string) string {
 	cmd := exec.Command(strs[0], strs[1:]...)
 	return QuickCommand(cmd)
 }
 
+//Run a command in an interactive shell.  If there isn't a terminal associated with this program, one should be opened for you.
+//
+//The STDIN/OUT/ERR will be provided to the child process
 func QuickCommandInteractive(cmd *exec.Cmd) {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -130,11 +140,13 @@ func QuickCommandInteractive(cmd *exec.Cmd) {
 	cmd.Run()
 }
 
+//Run a command.  The first element is the path to the executable, the rest are program arguments.  Returns stdout
 func QCI(strs []string) {
 	cmd := exec.Command(strs[0], strs[1:]...)
 	QuickCommandInteractive(cmd)
 }
 
+//Run a command.  The first arg is the path to the executable, the rest are program args.  Returns stdout and stderr mixed together
 func Command(cmd string, args []string) string {
 	log.Printf("Running '%v', '%v'", cmd, args)
 	out, err := exec.Command(cmd, args...).CombinedOutput()
@@ -149,6 +161,7 @@ func Command(cmd string, args []string) string {
 	return string(out)
 }
 
+//Searches a string to see if any lines in it match search
 func Grep(search, str string) string {
 	var out string
 	strs := strings.Split(str, "\n")
@@ -160,6 +173,7 @@ func Grep(search, str string) string {
 	return out
 }
 
+//Searches a list of strings, return any that match search.  Case insensitive
 func ListGrep(search string, strs []string) []string {
 	var out = []string{}
 	for _, v := range strs {
@@ -170,6 +184,7 @@ func ListGrep(search string, strs []string) []string {
 	return out
 }
 
+//Searches a list of strings, return any that don't match search.  Case insensitive
 func ListGrepInv(search string, strs []string) []string {
 	var out = []string{}
 	for _, v := range strs {
@@ -180,10 +195,13 @@ func ListGrepInv(search string, strs []string) []string {
 	return out
 }
 
+//ASCII id -> string
 func ToCharStr(i int) string {
 	return string('A' - 1 + i)
 }
 
+
+//ASCII id -> char
 func ToChar(i int) rune {
 	return rune('a' + i)
 }
