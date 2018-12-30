@@ -1,3 +1,6 @@
+//A collection of functions I use very often
+//
+// This is a convenient place to store all the functions that I use in a lot of programs.  They were useful for me, so they might be useful for you too.
 package goof
 
 import (
