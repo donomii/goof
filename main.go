@@ -9,12 +9,18 @@ import (
 	"encoding/hex"
 	"io"
 	"io/ioutil"
-	"log"
+
+	//"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 )
+
+//Delete a trailing /n, if it exists
+func Chomp(s string) string {
+	return strings.TrimSuffix(s, "\n")
+}
 
 //Return contents of file
 func CatFile(path string) []byte {
@@ -160,7 +166,7 @@ func QCI(strs []string) {
 
 //Run a command.  The first arg is the path to the executable, the rest are program args.  Returns stdout and stderr mixed together
 func Command(cmd string, args []string) string {
-	log.Printf("Running '%v', '%v'", cmd, args)
+	//log.Printf("Running '%v', '%v'", cmd, args)
 	out, err := exec.Command(cmd, args...).CombinedOutput()
 	if err != nil {
 		//fmt.Fprintf(os.Stderr, "IO> %v\n", string(out))
@@ -211,7 +217,6 @@ func ListGrepInv(search string, strs []string) []string {
 func ToCharStr(i int) string {
 	return string('A' - 1 + i)
 }
-
 
 //ASCII id -> char
 func ToChar(i int) rune {
