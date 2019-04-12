@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"io"
 	"io/ioutil"
+	"os/user"
 
 	//"log"
 	"os"
@@ -221,4 +222,12 @@ func ToCharStr(i int) string {
 //ASCII id -> char
 func ToChar(i int) rune {
 	return rune('a' + i)
+}
+
+//Build a path to a config file, from the default config location
+func ConfigFilePath(filename string) string {
+	user, _ := user.Current()
+	hDir := user.HomeDir
+	confPath := hDir + "/" + filename
+	return confPath
 }
