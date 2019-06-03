@@ -69,8 +69,9 @@ func LslR(dir string) []string {
 
 //List all files in a directory
 func Ls(dir string) []string {
-	out := []string{".."}
-	files, _ := ioutil.ReadDir(".")
+	//out := []string{".."}
+	out := []string{}
+	files, _ := ioutil.ReadDir(dir)
 	for _, f := range files {
 		out = append(out, f.Name())
 	}
