@@ -193,6 +193,12 @@ func Grep(search, str string) string {
 	return out
 }
 
+func HomeDirectory() string {
+	user, _ := user.Current()
+	hDir := user.HomeDir
+	return hDir
+}
+
 //Searches a list of strings, return any that match search.  Case insensitive
 func ListGrep(search string, strs []string) []string {
 	var out = []string{}
