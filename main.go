@@ -18,6 +18,16 @@ import (
 	"strings"
 )
 
+//Returns the directory this executable is in
+func ExecutablePath() string {
+	ex, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	exPath := filepath.Dir(ex)
+	return exPath
+}
+
 //Delete a trailing /n, if it exists
 func Chomp(s string) string {
 	return strings.TrimSuffix(s, "\n")
