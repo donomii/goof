@@ -11,12 +11,139 @@ import (
 	"io/ioutil"
 	"os/user"
 
-	//"log"
+	"bufio"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 )
+
+//Takes a (kernel-style) filehandle, and returns go queues that let you write to and read from that handle
+//Bytes will be read from the wrapped handle and written to the channels as quickly as possible, but there are no guarantees on speed or how many bytes
+//are delivered per message in the channel.  This routine does no buffering, however the wrapped process can use buffers, so you still might not get prompt
+//delivery of your data.  In general, most programs will use line buffering unless you can force them not to.
+//
+//Channel length is the buffer length of the go pipes
+func WrapHandle(fileHandle uintptr, channel_length int) (chan []byte, chan []byte) {
+	stdinQ := make(chan []byte, channel_length)
+	stdoutQ := make(chan []byte, channel_length)
+
+	pty := os.NewFile(fileHandle, "WrappedShell")
+
+	go func() {
+		for {
+			data := <-stdinQ
+			if len(data) != 0 {
+				//log.Println("sent to process:", []byte(data))
+				pty.Write(data)
+			}
+		}
+	}()
+	rdout := bufio.NewReader(pty)
+	go func() {
+		for {
+
+			if rdout.Buffered() > 0 {
+				log.Printf("%v characters ready to read from stdout:", rdout.Buffered())
+			}
+			var data []byte = make([]byte, 1024*1024)
+			count, err := pty.Read(data)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Printf("read %v bytes from pty: %v,%v\n", count, string(data[:count]), []byte(data[:count]))
+			if count > 0 {
+				//log.Println("read from process:", data)
+				stdoutQ <- data[:count]
+			}
+
+		}
+	}()
+
+	return stdinQ, stdoutQ
+}
+
+//Starts a program, in the background, and returns three Go pipes of type (chan []byte), which are connected to the process's STDIN, STDOUT and STDERR.
+//Bytes will be read from the wrapped program and written to the channels as quickly as possible, but there are no guarantees on speed or how many bytes
+//are delivered per message in the channel.  This routine does no buffering, however the wrapped process can use buffers, so you still might not get prompt
+//delivery of your data.  In general, most programs will use line buffering unless you can force them not to.
+//
+//Channel length is the buffer length of the go pipes
+func WrapProc(pathToProgram string, channel_length int) (chan []byte, chan []byte, chan []byte) {
+	stdinQ := make(chan []byte, channel_length)
+	stdoutQ := make(chan []byte, channel_length)
+	stderrQ := make(chan []byte, channel_length)
+
+	cmd := exec.Command(pathToProgram)
+
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	out, err := cmd.StdoutPipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+	errPipe, err := cmd.StderrPipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := cmd.Start(); err != nil {
+		log.Fatal(err)
+	}
+
+	go func() {
+		for {
+			data := <-stdinQ
+			if len(data) != 0 {
+				//log.Println("sent to process:", []byte(data))
+				stdin.Write(data)
+			}
+		}
+	}()
+	rdout := bufio.NewReader(out)
+	go func() {
+		for {
+
+			if rdout.Buffered() > 0 {
+				log.Printf("%v characters ready to read from stdout:", rdout.Buffered())
+			}
+			var data []byte = make([]byte, 1024*1024)
+			count, err := out.Read(data)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Printf("read %v bytes from process: %v,%v\n", count, string(data[:count]), []byte(data[:count]))
+			if count > 0 {
+				//log.Println("read from process:", data)
+				stdoutQ <- data[:count]
+			}
+
+		}
+	}()
+	rderr := bufio.NewReader(errPipe)
+	go func() {
+		for {
+
+			if rdout.Buffered() > 0 {
+				log.Printf("%v characters ready to read from stderr:", rderr.Buffered())
+			}
+			var data []byte = make([]byte, 1024)
+			count, err := errPipe.Read(data)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if count > 0 {
+				//log.Println("read from process:", data)
+				stderrQ <- data[:count]
+			}
+
+		}
+	}()
+	return stdinQ, stdoutQ, stderrQ
+}
 
 //Returns the directory this executable is in
 func ExecutablePath() string {
@@ -33,7 +160,7 @@ func Chomp(s string) string {
 	return strings.TrimSuffix(s, "\n")
 }
 
-//Return contents of file
+//Return contents of file.  It's just ioutil.ReadFile, but with only one return value, and instead it will panic on any error
 func CatFile(path string) []byte {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -51,7 +178,7 @@ func Exists(path string) bool {
 	}
 }
 
-//Write text to the end of a file.  Note that the file is opened and closed on each call.
+//Write text at the end of a file.  Note that the file is opened and closed on each call, so it's not a good choice for logging..
 func AppendStringToFile(path, text string) error {
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
@@ -162,7 +289,7 @@ func QC(strs []string) string {
 
 //Run a command in an interactive shell.  If there isn't a terminal associated with this program, one should be opened for you.
 //
-//The STDIN/OUT/ERR will be provided to the child process
+//The current STDIN/OUT/ERR will be provided to the child process
 func QuickCommandInteractive(cmd *exec.Cmd) {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -170,7 +297,7 @@ func QuickCommandInteractive(cmd *exec.Cmd) {
 	cmd.Run()
 }
 
-//Run a command.  The first element is the path to the executable, the rest are program arguments.  Returns stdout
+//Run a command in an interactive shell.  If there isn't a terminal associated with this program, one should be opened for you.  The first element is the path to the executable, the rest are program arguments.  Returns stdout
 func QCI(strs []string) {
 	cmd := exec.Command(strs[0], strs[1:]...)
 	QuickCommandInteractive(cmd)
