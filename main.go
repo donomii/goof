@@ -42,18 +42,20 @@ func WrapHandle(fileHandle uintptr, channel_length int) (chan []byte, chan []byt
 	}()
 	rdout := bufio.NewReader(pty)
 	go func() {
+		var data []byte = make([]byte, 1024*1024)
 		for {
 
 			if rdout.Buffered() > 0 {
 				log.Printf("%v characters ready to read from stdout:", rdout.Buffered())
 			}
-			var data []byte = make([]byte, 1024*1024)
+
 			count, err := pty.Read(data)
 			if err != nil {
 				log.Fatal(err)
 			}
-			log.Printf("read %v bytes from pty: %v,%v\n", count, string(data[:count]), []byte(data[:count]))
+
 			if count > 0 {
+				log.Printf("read %v bytes from pty: %v,%v\n", count, string(data[:count]), []byte(data[:count]))
 				//log.Println("read from process:", data)
 				stdoutQ <- data[:count]
 			}
