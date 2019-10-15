@@ -46,16 +46,16 @@ func WrapHandle(fileHandle uintptr, channel_length int) (chan []byte, chan []byt
 		for {
 
 			if rdout.Buffered() > 0 {
-				log.Printf("%v characters ready to read from stdout:", rdout.Buffered())
+				//log.Printf("%v characters ready to read from stdout:", rdout.Buffered())
 			}
 
 			count, err := pty.Read(data)
 			if err != nil {
-				log.Fatal(err)
+				//log.Fatal(err)
 			}
 
 			if count > 0 {
-				log.Printf("read %v bytes from pty: %v,%v\n", count, string(data[:count]), []byte(data[:count]))
+				//log.Printf("read %v bytes from pty: %v,%v\n", count, string(data[:count]), []byte(data[:count]))
 				//log.Println("read from process:", data)
 				stdoutQ <- data[:count]
 			}
@@ -107,18 +107,20 @@ func WrapProc(pathToProgram string, channel_length int) (chan []byte, chan []byt
 	}()
 	rdout := bufio.NewReader(out)
 	go func() {
+		var data []byte = make([]byte, 1024*1024)
 		for {
 
 			if rdout.Buffered() > 0 {
-				log.Printf("%v characters ready to read from stdout:", rdout.Buffered())
+				//log.Printf("%v characters ready to read from stdout:", rdout.Buffered())
 			}
-			var data []byte = make([]byte, 1024*1024)
-			count, err := out.Read(data)
+
+			count, err := rdout.Read(data)
 			if err != nil {
 				log.Fatal(err)
 			}
-			log.Printf("read %v bytes from process: %v,%v\n", count, string(data[:count]), []byte(data[:count]))
 			if count > 0 {
+				//log.Printf("read %v bytes from process: %v,%v\n", count, string(data[:count]), []byte(data[:count]))
+
 				//log.Println("read from process:", data)
 				stdoutQ <- data[:count]
 			}
@@ -127,13 +129,14 @@ func WrapProc(pathToProgram string, channel_length int) (chan []byte, chan []byt
 	}()
 	rderr := bufio.NewReader(errPipe)
 	go func() {
+		var data []byte = make([]byte, 1024)
 		for {
 
 			if rdout.Buffered() > 0 {
-				log.Printf("%v characters ready to read from stderr:", rderr.Buffered())
+				//log.Printf("%v characters ready to read from stderr:", rderr.Buffered())
 			}
-			var data []byte = make([]byte, 1024)
-			count, err := errPipe.Read(data)
+
+			count, err := rderr.Read(data)
 			if err != nil {
 				log.Fatal(err)
 			}
