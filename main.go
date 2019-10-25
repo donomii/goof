@@ -4,20 +4,51 @@
 package goof
 
 import (
+	"bufio"
 	"bytes"
+	"compress/bzip2"
+	"compress/gzip"
 	"crypto/md5"
 	"encoding/hex"
 	"io"
 	"io/ioutil"
-	"os/user"
-
-	"bufio"
 	"log"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"strings"
 )
+
+//Opens a file or stdin (if filename is "").  Can open compressed files, and can decompress stdin.
+//Compression is "bz2" or "gz".  Pass "" as a filename to read stdin.
+func OpenInput(filename string, compression string) io.Reader {
+	var f *os.File
+	var err error
+
+	var inReader io.Reader
+	if filename == "" {
+		f = os.Stdin
+	} else {
+		f, err = os.Open(filename)
+		if err != nil {
+			log.Fatalf("Error opening file: %v", err)
+		}
+		//defer f.Close()
+	}
+
+	inReader = bufio.NewReader(f)
+
+	if (strings.HasSuffix(filename, "gz") || compression == "gz") && (!strings.HasSuffix(filename, "bz2")) {
+		inReader, err = gzip.NewReader(f)
+	}
+
+	if strings.HasSuffix(filename, "bz2") || compression == "bz2" {
+		inReader = bzip2.NewReader(f)
+	}
+
+	return inReader
+}
 
 //Takes a (kernel-style) filehandle, and returns go queues that let you write to and read from that handle
 //Bytes will be read from the wrapped handle and written to the channels as quickly as possible, but there are no guarantees on speed or how many bytes
