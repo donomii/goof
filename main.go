@@ -4,20 +4,51 @@
 package goof
 
 import (
+	"bufio"
 	"bytes"
+	"compress/bzip2"
+	"compress/gzip"
 	"crypto/md5"
 	"encoding/hex"
 	"io"
 	"io/ioutil"
-	"os/user"
-
-	"bufio"
 	"log"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"strings"
 )
+
+//Opens a file or stdin (if filename is "").  Can open compressed files, and can decompress stdin.
+//Compression is "bz2" or "gz".  Pass "" as a filename to read stdin.
+func OpenInput(filename string, compression string) io.Reader {
+	var f *os.File
+	var err error
+
+	var inReader io.Reader
+	if filename == "" {
+		f = os.Stdin
+	} else {
+		f, err = os.Open(filename)
+		if err != nil {
+			log.Fatalf("Error opening file: %v", err)
+		}
+		//defer f.Close()
+	}
+
+	inReader = bufio.NewReader(f)
+
+	if (strings.HasSuffix(filename, "gz") || compression == "gz") && (!strings.HasSuffix(filename, "bz2")) {
+		inReader, err = gzip.NewReader(f)
+	}
+
+	if strings.HasSuffix(filename, "bz2") || compression == "bz2" {
+		inReader = bzip2.NewReader(f)
+	}
+
+	return inReader
+}
 
 //Takes a (c-style) filehandle, and returns go queues that let you write to and read from that handle
 //Bytes will be read from the wrapped handle and written to the channels as quickly as possible, but there are no guarantees on speed or how many bytes
@@ -42,18 +73,20 @@ func WrapHandle(fileHandle uintptr, channel_length int) (chan []byte, chan []byt
 	}()
 	rdout := bufio.NewReader(pty)
 	go func() {
+		var data []byte = make([]byte, 1024*1024)
 		for {
 
 			if rdout.Buffered() > 0 {
-				log.Printf("%v characters ready to read from stdout:", rdout.Buffered())
+				//log.Printf("%v characters ready to read from stdout:", rdout.Buffered())
 			}
-			var data []byte = make([]byte, 1024*1024)
+
 			count, err := pty.Read(data)
 			if err != nil {
-				log.Fatal(err)
+				//log.Fatal(err)
 			}
-			log.Printf("read %v bytes from pty: %v,%v\n", count, string(data[:count]), []byte(data[:count]))
+
 			if count > 0 {
+				//log.Printf("read %v bytes from pty: %v,%v\n", count, string(data[:count]), []byte(data[:count]))
 				//log.Println("read from process:", data)
 				stdoutQ <- data[:count]
 			}
@@ -105,18 +138,20 @@ func WrapProc(pathToProgram string, channel_length int) (chan []byte, chan []byt
 	}()
 	rdout := bufio.NewReader(out)
 	go func() {
+		var data []byte = make([]byte, 1024*1024)
 		for {
 
 			if rdout.Buffered() > 0 {
-				log.Printf("%v characters ready to read from stdout:", rdout.Buffered())
+				//log.Printf("%v characters ready to read from stdout:", rdout.Buffered())
 			}
-			var data []byte = make([]byte, 1024*1024)
-			count, err := out.Read(data)
+
+			count, err := rdout.Read(data)
 			if err != nil {
 				log.Fatal(err)
 			}
-			log.Printf("read %v bytes from process: %v,%v\n", count, string(data[:count]), []byte(data[:count]))
 			if count > 0 {
+				//log.Printf("read %v bytes from process: %v,%v\n", count, string(data[:count]), []byte(data[:count]))
+
 				//log.Println("read from process:", data)
 				stdoutQ <- data[:count]
 			}
@@ -125,13 +160,14 @@ func WrapProc(pathToProgram string, channel_length int) (chan []byte, chan []byt
 	}()
 	rderr := bufio.NewReader(errPipe)
 	go func() {
+		var data []byte = make([]byte, 1024)
 		for {
 
 			if rdout.Buffered() > 0 {
-				log.Printf("%v characters ready to read from stderr:", rderr.Buffered())
+				//log.Printf("%v characters ready to read from stderr:", rderr.Buffered())
 			}
-			var data []byte = make([]byte, 1024)
-			count, err := errPipe.Read(data)
+
+			count, err := rderr.Read(data)
 			if err != nil {
 				log.Fatal(err)
 			}
