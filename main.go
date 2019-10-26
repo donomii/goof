@@ -19,7 +19,7 @@ import (
 	"strings"
 )
 
-//Takes a (kernel-style) filehandle, and returns go queues that let you write to and read from that handle
+//Takes a (c-style) filehandle, and returns go queues that let you write to and read from that handle
 //Bytes will be read from the wrapped handle and written to the channels as quickly as possible, but there are no guarantees on speed or how many bytes
 //are delivered per message in the channel.  This routine does no buffering, however the wrapped process can use buffers, so you still might not get prompt
 //delivery of your data.  In general, most programs will use line buffering unless you can force them not to.
