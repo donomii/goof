@@ -10,6 +10,7 @@ import (
 	"compress/gzip"
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"log"
@@ -48,6 +49,11 @@ func OpenInput(filename string, compression string) io.Reader {
 	}
 
 	return inReader
+}
+
+=======
+func OpenBufferedInput(filename string, compression string) *bufio.Reader {
+	return bufio.NewReaderSize(OpenInput(filename, compression), 134217728)
 }
 
 //Takes a (c-style) filehandle, and returns go queues that let you write to and read from that handle
@@ -410,4 +416,65 @@ func ConfigFilePath(filename string) string {
 	hDir := user.HomeDir
 	confPath := hDir + "/" + filename
 	return confPath
+}
+
+//Attempt to read config from filename.  If filename does not exist, write default_config to the file and parse that data.
+func ReadOrMakeConfig(filename string, default_config string) map[string]interface{} {
+	var err error
+	var data []byte
+	data, err = ioutil.ReadFile(filename)
+	if err != nil {
+		log.Printf("Could not read config file, writing new file and returning default values(%v)", err)
+		data = []byte(default_config)
+		err := ioutil.WriteFile(filename, []byte(default_config), 0644)
+		if err != nil {
+			log.Printf("Could not write new config file, returning default values(%v)", err)
+		}
+	}
+	var f interface{}
+	err = json.Unmarshal([]byte(data), &f)
+	if err != nil {
+		log.Printf("Could not parse config file: %v", err)
+	}
+	return f.(map[string]interface{})
+}
+
+// Find a string value in the config and return it
+func ConfString(f map[string]interface{}, key string, default_value string) string {
+	val, err := f[key]
+	if err {
+		log.Println("key '%v' not found in config file!")
+		return default_value
+	}
+	return val.(string)
+}
+
+// Find an int value in the config and return it
+func ConfInt(f map[string]interface{}, key string, default_value int) int {
+	val, err := f[key]
+	if err {
+		log.Println("key '%v' not found in config file!")
+		return default_value
+	}
+	return val.(int)
+}
+
+// Find a bool value in the config and return it
+func ConfBool(f map[string]interface{}, key string, default_value bool) bool {
+	val, err := f[key]
+	if err {
+		log.Println("key '%v' not found in config file!")
+		return default_value
+	}
+	return val.(bool)
+}
+
+// Find a Float64 value in the config and return it
+func ConfFloat64(f map[string]interface{}, key string, default_value float64) float64 {
+	val, err := f[key]
+	if err {
+		log.Println("key '%v' not found in config file!")
+		return default_value
+	}
+	return val.(float64)
 }
