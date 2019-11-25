@@ -51,7 +51,6 @@ func OpenInput(filename string, compression string) io.Reader {
 	return inReader
 }
 
-=======
 func OpenBufferedInput(filename string, compression string) *bufio.Reader {
 	return bufio.NewReaderSize(OpenInput(filename, compression), 134217728)
 }
