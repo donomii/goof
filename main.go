@@ -442,7 +442,7 @@ func ReadOrMakeConfig(filename string, default_config string) map[string]interfa
 func ConfString(f map[string]interface{}, key string, default_value string) string {
 	val, err := f[key]
 	if err {
-		log.Println("key '%v' not found in config file!")
+		log.Printf("key '%v' not found in config file!", key)
 		return default_value
 	}
 	return val.(string)
@@ -452,7 +452,7 @@ func ConfString(f map[string]interface{}, key string, default_value string) stri
 func ConfInt(f map[string]interface{}, key string, default_value int) int {
 	val, err := f[key]
 	if err {
-		log.Println("key '%v' not found in config file!")
+		log.Printf("key '%v' not found in config file!", key)
 		return default_value
 	}
 	return val.(int)
@@ -462,7 +462,7 @@ func ConfInt(f map[string]interface{}, key string, default_value int) int {
 func ConfBool(f map[string]interface{}, key string, default_value bool) bool {
 	val, err := f[key]
 	if err {
-		log.Println("key '%v' not found in config file!")
+		log.Printf("key '%v' not found in config file!", key)
 		return default_value
 	}
 	return val.(bool)
@@ -472,7 +472,7 @@ func ConfBool(f map[string]interface{}, key string, default_value bool) bool {
 func ConfFloat64(f map[string]interface{}, key string, default_value float64) float64 {
 	val, err := f[key]
 	if err {
-		log.Println("key '%v' not found in config file!")
+		log.Printf("key '%v' not found in config file!", key)
 		return default_value
 	}
 	return val.(float64)
