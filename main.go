@@ -11,14 +11,18 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/user"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 //Opens a file or stdin (if filename is "").  Can open compressed files, and can decompress stdin.
@@ -184,6 +188,70 @@ func WrapProc(pathToProgram string, channel_length int) (chan []byte, chan []byt
 		}
 	}()
 	return stdinQ, stdoutQ, stderrQ
+}
+
+func getBody(response *http.Response, url string) ([]byte, bool) {
+	var bodyText []byte
+	var err error
+	if response == nil {
+		log.Println("Null pointer instead of respose")
+		return bodyText, false
+	}
+	if response.Body != nil {
+		defer response.Body.Close()
+		bodyText, err = ioutil.ReadAll(response.Body)
+	} else {
+		if response.Request.Method != "PUT" {
+			//No body in response to a put request
+		} else {
+			panic("Nil response to request")
+
+		}
+	}
+
+	if err != nil {
+		return bodyText, false
+	}
+	log.Println("Response code:", response.StatusCode)
+	if response.StatusCode > 399 {
+		log.Printf("Unrecoverable error during http request(%v)!  Server responded with: %v, %v(%v)", url, response.StatusCode, bodyText, string(bodyText))
+		panic(fmt.Sprintf("Unrecoverable error during http request(%v)!  Server responded with: %v, %v(%v)", url, response.StatusCode, bodyText, string(bodyText)))
+	} else {
+		log.Printf("Result code %v is less than 400, call was probably successful", response.StatusCode)
+	}
+	if response.StatusCode == 200 {
+		log.Println("Status 200, call successful, returning true")
+		return bodyText, true
+	}
+	log.Println("Call failed due to non 200 error code, returning false:", response)
+	return bodyText, false
+
+}
+
+func SimpleGet(path string) ([]byte, error) {
+	tr := &http.Transport{
+		MaxIdleConns:        2,
+		IdleConnTimeout:     10 * time.Second,
+		DisableCompression:  true,
+		TLSHandshakeTimeout: 10 * time.Second,
+	}
+	client := http.Client{Transport: tr}
+	req, err := http.NewRequest("GET", path, nil)
+	response, err := client.Do(req)
+	if response != nil && response.Body != nil {
+		defer response.Body.Close()
+	}
+	if err != nil {
+		log.Println(err)
+		return []byte{}, err
+	}
+	bodyText, ok := getBody(response, path)
+	if !ok {
+		log.Println("getHttp failed for", path)
+		return bodyText, errors.New("getHttp failed")
+	}
+
+	return bodyText, nil
 }
 
 //Returns the directory this executable is in
