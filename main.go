@@ -55,6 +55,19 @@ func OpenInput(filename string, compression string) io.Reader {
 	return inReader
 }
 
+func AbsFloat32(x float32) float32 {
+	if x < 0.0 {
+		return x * -1.0
+	}
+	return x
+}
+
+func AbsFloat64(x float64) float64 {
+	if x < 0.0 {
+		return x * -1.0
+	}
+	return x
+}
 func OpenBufferedInput(filename string, compression string) *bufio.Reader {
 	return bufio.NewReaderSize(OpenInput(filename, compression), 134217728)
 }
@@ -212,18 +225,18 @@ func getBody(response *http.Response, url string) ([]byte, bool) {
 	if err != nil {
 		return bodyText, false
 	}
-	log.Println("Response code:", response.StatusCode)
+	//log.Println("Response code:", response.StatusCode)
 	if response.StatusCode > 399 {
 		log.Printf("Unrecoverable error during http request(%v)!  Server responded with: %v, %v(%v)", url, response.StatusCode, bodyText, string(bodyText))
 		panic(fmt.Sprintf("Unrecoverable error during http request(%v)!  Server responded with: %v, %v(%v)", url, response.StatusCode, bodyText, string(bodyText)))
 	} else {
-		log.Printf("Result code %v is less than 400, call was probably successful", response.StatusCode)
+		//log.Printf("Result code %v is less than 400, call was probably successful", response.StatusCode)
 	}
 	if response.StatusCode == 200 {
-		log.Println("Status 200, call successful, returning true")
+		//log.Println("Status 200, call successful, returning true")
 		return bodyText, true
 	}
-	log.Println("Call failed due to non 200 error code, returning false:", response)
+	log.Println("Call failed due to non 200 error code:", response)
 	return bodyText, false
 
 }
@@ -280,7 +293,8 @@ func CatFile(path string) []byte {
 
 //Does this file or directory exist?
 func Exists(path string) bool {
-	if _, err := os.Stat(path); !os.IsNotExist(err) {
+	if _, err := os.Stat(path); err == nil {
+		fmt.Println(path, "Exists")
 		return true
 	} else {
 		return false
