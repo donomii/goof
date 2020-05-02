@@ -294,7 +294,7 @@ func CatFile(path string) []byte {
 //Does this file or directory exist?
 func Exists(path string) bool {
 	if _, err := os.Stat(path); err == nil {
-		fmt.Println(path, "Exists")
+		//fmt.Println(path, "Exists")
 		return true
 	} else {
 		return false

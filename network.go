@@ -13,6 +13,9 @@ import (
 	"github.com/grandcat/zeroconf"
 )
 
+//Try to find the network interface that is connected to the internet, and get its IP address
+//This does not find the IP of your firewall or WAN connection, just the IP on the network that
+//you are directly connected to
 func ExternalIP() (string, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
@@ -50,6 +53,7 @@ func ExternalIP() (string, error) {
 	return "", errors.New("are you connected to the network?")
 }
 
+//Attempt to connect to PORT on every IP address in your class C network
 func ScanHosts(timeout, port int, outch chan string) string {
 	if timeout > 3000 {
 		//panic("Cannot find any server!")
