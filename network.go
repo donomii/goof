@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -154,21 +156,73 @@ func GetOutboundIP() (localAddr net.IP) {
 //payload: will be delivered verbatim to the client
 func AdvertiseMDNS(serverPort int, service, domain, name string, payload []string) {
 	for {
-		server, err := zeroconf.Register(name, service, domain, serverPort, payload, nil)
-		if err != nil {
-			panic(err)
-		}
 
-		if false {
+		if true {
 			log.Println("Published service:")
 			log.Println("- Name:", name)
 			log.Println("- Type:", service)
 			log.Println("- Domain:", domain)
 			log.Println("- Port:", serverPort)
 
-			log.Println("Advertising")
+			log.Println("Now Advertising")
 		}
+		server, err := zeroconf.Register(name, service, domain, serverPort, payload, nil)
+		if err != nil {
+			panic(err)
+		}
+
 		time.Sleep(5 * time.Second)
 		server.Shutdown()
 	}
+}
+
+//Register programPath with Windows UAC so it can listen on network ports.  programName is a descriptive name
+func OpenFirewall(programPath, programName string) {
+	ioutil.WriteFile("firewall.bat", firewallbat(programPath, programName), 0644) //FIXME temp filenames
+	QC([]string{"firewall.bat"})
+	go func() {
+		time.Sleep(30 * time.Second)
+		os.Remove("firewall.bat")
+	}()
+}
+
+func firewallbat(programPath, programName string) []byte {
+	return []byte(strings.Join([]string{
+		`@echo off
+	
+:: BatchGotAdmin
+:-------------------------------------
+REM  --> Check for permissions
+    IF "%PROCESSOR_ARCHITECTURE%" EQU "amd64" (
+>nul 2>&1 "%SYSTEMROOT%\SysWOW64\cacls.exe" "%SYSTEMROOT%\SysWOW64\config\system"
+) ELSE (
+>nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
+)
+
+REM --> If error flag set, we do not have admin.
+if '%errorlevel%' NEQ '0' (
+    echo Requesting administrative privileges...
+    goto UACPrompt
+) else ( goto gotAdmin )
+
+:UACPrompt
+    echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\getadmin.vbs"
+    set params= %*
+    echo UAC.ShellExecute "cmd.exe", "/c ""%~s0"" %params:"=""%", "", "runas", 1 >> "%temp%\getadmin.vbs"
+
+    "%temp%\getadmin.vbs"
+    del "%temp%\getadmin.vbs"
+    exit /B
+
+:gotAdmin
+    pushd "%CD%"
+    CD /D "%~dp0"
+:--------------------------------------
+netsh firewall add allowedprogram %cd%\`,
+		programPath,
+		` "`,
+		programName,
+		`" ENABLE
+`,
+	}, ""))
 }
