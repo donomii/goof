@@ -171,9 +171,7 @@ func AdvertiseMDNS(serverPort int, service, domain, name string, payload []strin
 			panic(err)
 		}
 
-		for {
-			time.Sleep(1 * time.Second)
-		}
+		time.Sleep(5 * time.Second)
 		server.Shutdown()
 	}
 }
