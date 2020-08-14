@@ -25,6 +25,20 @@ import (
 	"time"
 )
 
+// Return an array of integers from min to max, so you can range over them
+
+func Seq(min, max int) []int {
+	size := max - min + 1
+	if size < 1 {
+		return []int{}
+	}
+	a := make([]int, size)
+	for i := range a {
+		a[i] = min + i
+	}
+	return a
+}
+
 //Opens a file or stdin (if filename is "").  Can open compressed files, and can decompress stdin.
 //Compression is "bz2" or "gz".  Pass "" as a filename to read stdin.
 func OpenInput(filename string, compression string) io.Reader {
