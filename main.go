@@ -497,7 +497,8 @@ func ListGrepInv(search string, strs []string) []string {
 
 //ASCII id -> string
 func ToCharStr(i int) string {
-	return string(fmt.Sprintf("%v", 'A' - 1 + i))
+	r := rune('A' - 1 + i)
+	return fmt.Sprintf("%v", r)
 }
 
 //ASCII id -> char
