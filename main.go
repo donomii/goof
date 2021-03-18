@@ -21,6 +21,7 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -453,6 +454,11 @@ func Command(cmd string, args []string) string {
 		//fmt.Fprintf(os.Stderr, "O> %v\n\n", string(out))
 	}
 	return string(out)
+}
+
+func SplitPath(path string) []string {
+	return regexp.MustCompile("\\\\|/").Split(path, -1)
+
 }
 
 //Searches a string to see if any lines in it match search
