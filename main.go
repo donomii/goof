@@ -461,6 +461,16 @@ func SplitPath(path string) []string {
 
 }
 
+func Clamp(a, min, max int) int {
+	if a < min {
+		a = min
+	}
+	if a > max {
+		a = max
+	}
+	return a
+}
+
 //Searches a string to see if any lines in it match search
 func Grep(search, str string) string {
 	var out string
