@@ -55,6 +55,19 @@ func ExternalIP() (string, error) {
 	return "", errors.New("are you connected to the network?")
 }
 
+func AllIps() []string {
+	host, _ := os.Hostname()
+	addrs, _ := net.LookupIP(host)
+	out := []string{}
+	for _, addr := range addrs {
+		if ipv4 := addr.To4(); ipv4 != nil {
+			fmt.Println("IPv4: ", ipv4)
+			out = append(out, fmt.Sprintf("%v", ipv4))
+		}
+	}
+	return out
+}
+
 //Attempt to connect to PORT on every IP address in your class C network
 func ScanHosts(timeout, port int, outch chan string) string {
 	if timeout > 3000 {
