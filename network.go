@@ -15,6 +15,22 @@ import (
 	"github.com/grandcat/zeroconf"
 )
 
+func WrappedTraceroute(target string) []string {
+	out := []string{}
+	raw := QC([]string{"traceroute", "-n", "-m", "3", "-q", "1", "-P", "icmp", "8.8.8.8"})
+	hops := Grep("ms", raw)
+	for _, l := range strings.Split(hops, "\n") {
+		bits := strings.Split(l, "  ")
+		if len(bits) > 1 {
+			ip := bits[1]
+			ip = strings.Trim(ip, " \t\r\n")]
+			fmt.Printf("IP '%v'\n", bits[1])
+			out = append(out, bits[1])
+		}
+	}
+	return out
+}
+
 //Try to find the network interface that is connected to the internet, and get its IP address
 //This does not find the IP of your firewall or WAN connection, just the IP on the network that
 //you are directly connected to
