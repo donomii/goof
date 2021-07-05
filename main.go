@@ -183,6 +183,7 @@ func WrapCmd(cmd *exec.Cmd, channel_length int) (chan []byte, chan []byte, chan 
 				//log.Println("sent to process:", []byte(data))
 				stdin.Write(data)
 			}
+			time.Sleep(10 * time.Millisecond)
 		}
 	}()
 	rdout := bufio.NewReader(out)
@@ -205,6 +206,8 @@ func WrapCmd(cmd *exec.Cmd, channel_length int) (chan []byte, chan []byte, chan 
 				stdoutQ <- data[:count]
 			}
 
+			time.Sleep(10 * time.Millisecond)
+
 		}
 	}()
 	rderr := bufio.NewReader(errPipe)
@@ -224,6 +227,8 @@ func WrapCmd(cmd *exec.Cmd, channel_length int) (chan []byte, chan []byte, chan 
 				//log.Println("read from process:", data)
 				stderrQ <- data[:count]
 			}
+
+			time.Sleep(10 * time.Millisecond)
 
 		}
 	}()
