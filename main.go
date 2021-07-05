@@ -154,6 +154,7 @@ func WrapProc(pathToProgram string, channel_length int) (chan []byte, chan []byt
 //
 //Channel length is the buffer length of the go pipes
 func WrapCmd(cmd *exec.Cmd, channel_length int) (chan []byte, chan []byte, chan []byte) {
+
 	stdinQ := make(chan []byte, channel_length)
 	stdoutQ := make(chan []byte, channel_length)
 	stderrQ := make(chan []byte, channel_length)
@@ -195,7 +196,7 @@ func WrapCmd(cmd *exec.Cmd, channel_length int) (chan []byte, chan []byte, chan 
 
 			count, err := rdout.Read(data)
 			if err != nil {
-				log.Fatal(err)
+				log.Fatal(fmt.Sprintf("Could not read from process: %v.  %v\n", cmd.Path, err))
 			}
 			if count > 0 {
 				//log.Printf("read %v bytes from process: %v,%v\n", count, string(data[:count]), []byte(data[:count]))
@@ -217,7 +218,7 @@ func WrapCmd(cmd *exec.Cmd, channel_length int) (chan []byte, chan []byte, chan 
 
 			count, err := rderr.Read(data)
 			if err != nil {
-				log.Fatal(err)
+				log.Fatal(fmt.Sprintf("Could not read from process: %v.  %v\n", cmd.Path, err))
 			}
 			if count > 0 {
 				//log.Println("read from process:", data)
