@@ -216,10 +216,10 @@ func WrapCmd(cmd *exec.Cmd, channel_length int) (chan []byte, chan []byte, chan 
 				//log.Printf("%v characters ready to read from stderr:", rderr.Buffered())
 			}
 
-			count, err := rderr.Read(data)
-			if err != nil {
+			count, _ := rderr.Read(data)
+			/*if err != nil {
 				log.Fatal(fmt.Sprintf("Could not read from process: %v.  %v\n", cmd.Path, err))
-			}
+			}*/
 			if count > 0 {
 				//log.Println("read from process:", data)
 				stderrQ <- data[:count]
