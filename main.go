@@ -194,10 +194,10 @@ func WrapCmd(cmd *exec.Cmd, channel_length int) (chan []byte, chan []byte, chan 
 				//log.Printf("%v characters ready to read from stdout:", rdout.Buffered())
 			}
 
-			count, err := rdout.Read(data)
-			if err != nil {
+			count, _ := rdout.Read(data)
+			/*if err != nil {
 				log.Fatal(fmt.Sprintf("Could not read from process: %v.  %v\n", cmd.Path, err))
-			}
+			}*/
 			if count > 0 {
 				//log.Printf("read %v bytes from process: %v,%v\n", count, string(data[:count]), []byte(data[:count]))
 
