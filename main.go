@@ -161,19 +161,19 @@ func WrapCmd(cmd *exec.Cmd, channel_length int) (chan []byte, chan []byte, chan 
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(fmt.Sprintf("Could not open pipe: %v\n", err))
 	}
 
 	out, err := cmd.StdoutPipe()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(fmt.Sprintf("Could not open pipe: %v\n", err))
 	}
 	errPipe, err := cmd.StderrPipe()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(fmt.Sprintf("Could not open pipe: %v\n", err))
 	}
 	if err := cmd.Start(); err != nil {
-		log.Fatal(err)
+		log.Fatal(fmt.Sprintf("Could not start command: %v\n", err))
 	}
 
 	go func() {
