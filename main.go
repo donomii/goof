@@ -3,6 +3,9 @@
 // This is a convenient place to store all the functions that I use in a lot of programs.  They were useful for me, so they might be useful for you too.
 package goof
 
+//go:generate go mod init github.com/donomii/goof
+//go:generate go mod tidy
+
 import (
 	"bufio"
 	"bytes"
@@ -61,6 +64,9 @@ func OpenInput(filename string, compression string) io.Reader {
 
 	if (strings.HasSuffix(filename, "gz") || compression == "gz") && (!strings.HasSuffix(filename, "bz2")) {
 		inReader, err = gzip.NewReader(f)
+		if err != nil {
+			log.Fatalf("Error ungzipping file: %v", err)
+		}
 	}
 
 	if strings.HasSuffix(filename, "bz2") || compression == "bz2" {
@@ -108,19 +114,14 @@ func WrapHandle(fileHandle uintptr, channel_length int) (chan []byte, chan []byt
 			}
 		}
 	}()
-	rdout := bufio.NewReader(pty)
+
 	go func() {
 		var data []byte = make([]byte, 1024*1024)
 		for {
-
-			if rdout.Buffered() > 0 {
-				//log.Printf("%v characters ready to read from stdout:", rdout.Buffered())
-			}
-
-			count, err := pty.Read(data)
-			if err != nil {
-				//log.Fatal(err)
-			}
+			count, _ := pty.Read(data)
+			//if err != nil {
+			//log.Fatal(err)
+			//}
 
 			if count > 0 {
 				//log.Printf("read %v bytes from pty: %v,%v\n", count, string(data[:count]), []byte(data[:count]))
@@ -141,11 +142,21 @@ func WrapHandle(fileHandle uintptr, channel_length int) (chan []byte, chan []byt
 //
 //Channel length is the buffer length of the go pipes
 func WrapProc(pathToProgram string, channel_length int) (chan []byte, chan []byte, chan []byte) {
+	cmd := exec.Command(pathToProgram)
+
+	return WrapCmd(cmd, channel_length)
+}
+
+//Starts a program, in the background, and returns three Go pipes of type (chan []byte), which are connected to the process's STDIN, STDOUT and STDERR.
+//Bytes will be read from the wrapped program and written to the channels as quickly as possible, but there are no guarantees on speed or how many bytes
+//are delivered per message in the channel.  This routine does no buffering, however the wrapped process can use buffers, so you still might not get prompt
+//delivery of your data.  In general, most programs will use line buffering unless you can force them not to.
+//
+//Channel length is the buffer length of the go pipes
+func WrapCmd(cmd *exec.Cmd, channel_length int) (chan []byte, chan []byte, chan []byte) {
 	stdinQ := make(chan []byte, channel_length)
 	stdoutQ := make(chan []byte, channel_length)
 	stderrQ := make(chan []byte, channel_length)
-
-	cmd := exec.Command(pathToProgram)
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {

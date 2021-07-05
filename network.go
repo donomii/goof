@@ -23,9 +23,9 @@ func WrappedTraceroute(target string) []string {
 		bits := strings.Split(l, "  ")
 		if len(bits) > 1 {
 			ip := bits[1]
-			ip = strings.Trim(ip, " \t\r\n")]
-			fmt.Printf("IP '%v'\n", bits[1])
-			out = append(out, bits[1])
+			ip = strings.Trim(ip, " \t\r\n")
+			fmt.Printf("IP '%v'\n", ip)
+			out = append(out, ip)
 		}
 	}
 	return out
@@ -85,9 +85,15 @@ func AllIps() []string {
 }
 
 //Attempt to connect to PORT on every IP address in your class C network
-func ScanHosts(timeout, port int, outch chan string) string {
-	if timeout > 3000 {
+func ScanHosts(timeout, port int, outch chan string) {
+	ScanHostsRec(timeout, port, 0, outch)
+}
+
+//Attempt to connect to PORT on every IP address in your class C network
+func ScanHostsRec(timeout, port, elapsed int, outch chan string) {
+	if timeout > 0 && elapsed > timeout {
 		//panic("Cannot find any server!")
+		return
 	}
 	ip, err := ExternalIP()
 	if err == nil {
@@ -120,8 +126,7 @@ func ScanHosts(timeout, port int, outch chan string) string {
 		log.Println("NO NETWORK")
 	}
 	//fmt.Println("Finished scan")
-	return ScanHosts(timeout+1000, port, outch)
-
+	ScanHostsRec(timeout, port, elapsed+1000, outch)
 }
 
 //search e.g. "_workstation._tcp"
