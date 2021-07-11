@@ -23,7 +23,7 @@ func WrappedTraceroute(target string) []string {
 		bits := strings.Split(l, "  ")
 		if len(bits) > 1 {
 			ip := bits[1]
-			ip = strings.Trim(ip, " \t\r\n")]
+			ip = strings.Trim(ip, " \t\r\n")
 			fmt.Printf("IP '%v'\n", bits[1])
 			out = append(out, bits[1])
 		}
