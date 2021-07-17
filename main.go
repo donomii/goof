@@ -7,6 +7,7 @@ package goof
 //go:generate go mod tidy
 
 import (
+"runtime"
 	"bufio"
 	"bytes"
 	"compress/bzip2"
@@ -28,6 +29,27 @@ import (
 	"strings"
 	"time"
 )
+
+
+func Shell(cmd string)string{
+		var result string
+		switch runtime.GOOS {
+		case "linux":
+			log.Println("Starting ", cmd)
+			result = Command("/bin/sh", []string{"-c", cmd})
+			result = result + Command("cmd", []string{"/c", cmd})
+		case "windows":
+			cmdArray := []string{"/c", cmd}
+			log.Println("Starting cmd", cmdArray)
+			result =  Command("c:\\Windows\\System32\\cmd.exe", cmdArray)
+		case "darwin":
+			result = result + Command("/bin/sh", []string{"-c", cmd})
+		default:
+			log.Println("unsupported platform when trying to run application")
+		}
+		return result
+}
+
 
 // Return an array of integers from min to max, so you can range over them
 
