@@ -7,7 +7,6 @@ package goof
 //go:generate go mod tidy
 
 import (
-"runtime"
 	"bufio"
 	"bytes"
 	"compress/bzip2"
@@ -26,30 +25,29 @@ import (
 	"os/user"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 )
 
-
-func Shell(cmd string)string{
-		var result string
-		switch runtime.GOOS {
-		case "linux":
-			log.Println("Starting ", cmd)
-			result = Command("/bin/sh", []string{"-c", cmd})
-			result = result + Command("cmd", []string{"/c", cmd})
-		case "windows":
-			cmdArray := []string{"/c", cmd}
-			log.Println("Starting cmd", cmdArray)
-			result =  Command("c:\\Windows\\System32\\cmd.exe", cmdArray)
-		case "darwin":
-			result = result + Command("/bin/sh", []string{"-c", cmd})
-		default:
-			log.Println("unsupported platform when trying to run application")
-		}
-		return result
+func Shell(cmd string) string {
+	var result string
+	switch runtime.GOOS {
+	case "linux":
+		log.Println("Starting ", cmd)
+		result = Command("/bin/sh", []string{"-c", cmd})
+		result = result + Command("cmd", []string{"/c", cmd})
+	case "windows":
+		cmdArray := []string{"/c", cmd}
+		log.Println("Starting cmd", cmdArray)
+		result = Command("c:\\Windows\\System32\\cmd.exe", cmdArray)
+	case "darwin":
+		result = result + Command("/bin/sh", []string{"-c", cmd})
+	default:
+		log.Println("unsupported platform when trying to run application")
+	}
+	return result
 }
-
 
 // Return an array of integers from min to max, so you can range over them
 
@@ -111,6 +109,14 @@ func AbsFloat64(x float64) float64 {
 	}
 	return x
 }
+
+func AbsInt(x int) int {
+	if x < 0.0 {
+		return x * -1.0
+	}
+	return x
+}
+
 func OpenBufferedInput(filename string, compression string) *bufio.Reader {
 	return bufio.NewReaderSize(OpenInput(filename, compression), 134217728)
 }
