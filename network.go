@@ -15,6 +15,33 @@ import (
 	"github.com/grandcat/zeroconf"
 )
 
+/*
+package main
+
+import (
+	"log"
+	"time"
+
+	"github.com/donomii/goof"
+)
+
+func main() {
+	go func() {
+		time.Sleep(10 * time.Second)
+		goof.AdvertiseMDNS(80, "test._workstation._tcp", "local", "test server", []string{"lalala"}, 120, false)
+	}()
+	c := goof.StartMDNSscan("_services._dns-sd._udp", "local", -1)
+	goof.ScanMDNS(c, "_workstation._tcp", "local", -1)
+	goof.ScanMDNS(c, "_udisks-ssh._tcp", "local", -1)
+	goof.ScanMDNS(c, "_ssh._tcp", "local", -1)
+	goof.ScanMDNS(c, "_tcp", "local", -1)
+	goof.ScanMDNS(c, "_udp", "local", -1)
+	for x := range c {
+		log.Println(x)
+	}
+}
+*/
+
 func WrappedTraceroute(target string) []string {
 	out := []string{}
 	raw := QC([]string{"traceroute", "-n", "-m", "3", "-q", "1", "-P", "icmp", "8.8.8.8"})
@@ -129,10 +156,10 @@ func ScanHostsRec(timeout, port, elapsed int, outch chan string) {
 	ScanHostsRec(timeout, port, elapsed+1000, outch)
 }
 
-//search e.g. "_workstation._tcp"
+//search e.g. "_workstation._tcp" or _services._dns-sd._udp
 //domain e.g. "local"
-//waitTime e.g. 10
-func ScanMDNS(found chan []string, search, domain string, waitTime int) {
+//waitTime e.g. -1
+func ScanMDNS(found chan *zeroconf.ServiceEntry, search, domain string, waitTime int) {
 	// Discover all services on the network (e.g. _workstation._tcp)
 	resolver, err := zeroconf.NewResolver(nil)
 	if err != nil {
@@ -142,14 +169,20 @@ func ScanMDNS(found chan []string, search, domain string, waitTime int) {
 	entries := make(chan *zeroconf.ServiceEntry)
 	go func(results <-chan *zeroconf.ServiceEntry) {
 		for entry := range results {
-			log.Printf("%+v\n", entry)
-			found <- entry.Text
+			log.Printf("ScanMDNS found: %+v\n", entry)
+			found <- entry
 		}
-		log.Println("No more entries.")
+		log.Println("ScanMDNS: No more entries.")
 	}(entries)
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(waitTime))
-	defer cancel()
+	var ctx context.Context
+	var cancel context.CancelFunc
+	if waitTime > -1 {
+		ctx, cancel = context.WithTimeout(context.Background(), time.Second*time.Duration(waitTime))
+		defer cancel()
+	} else {
+		ctx, cancel = context.WithCancel(context.Background())
+		defer cancel()
+	}
 	err = resolver.Browse(ctx, search, domain, entries)
 	if err != nil {
 		log.Fatalln("Failed to browse:", err.Error())
@@ -158,11 +191,11 @@ func ScanMDNS(found chan []string, search, domain string, waitTime int) {
 	<-ctx.Done()
 }
 
-//search e.g. "_workstation._tcp"
+//search e.g. "_workstation._tcp" or _services._dns-sd._udp
 //domain e.g. "local"
 //waitTime e.g. 10
-func StartMDNSscan(search, domain string, waitTime int) chan []string {
-	found := make(chan []string, 0)
+func StartMDNSscan(search, domain string, waitTime int) chan *zeroconf.ServiceEntry {
+	found := make(chan *zeroconf.ServiceEntry, 100)
 	go ScanMDNS(found, search, domain, waitTime)
 	return found
 }
@@ -182,30 +215,25 @@ func GetOutboundIP() (localAddr net.IP) {
 	return
 }
 
-//search e.g. "_workstation._tcp"
+//service e.g. "_workstation._tcp"
 //domain e.g. "local"
-//waitTime e.g. 10
 //serverPort: e.g. 80
 //name: e.g. "Totally awesome server"
 //payload: will be delivered verbatim to the client
-func AdvertiseMDNS(serverPort int, service, domain, name string, payload []string) {
+//sleepTime:  Time between advertisements
+//logAdvertisement: log each time we advertise
+func AdvertiseMDNS(serverPort int, service, domain, name string, payload []string, sleepTime int, logAdvertisement bool) {
 	for {
 
-		if true {
-			log.Println("Published service:")
-			log.Println("- Name:", name)
-			log.Println("- Type:", service)
-			log.Println("- Domain:", domain)
-			log.Println("- Port:", serverPort)
-
-			log.Println("Now Advertising")
+		if logAdvertisement {
+			log.Printf("Published service - Name: %v, Type: %v, Domain: %v, Port: %v\n", name, service, domain, serverPort)
 		}
 		server, err := zeroconf.Register(name, service, domain, serverPort, payload, nil)
 		if err != nil {
 			panic(err)
 		}
 
-		time.Sleep(5 * time.Second)
+		time.Sleep(time.Duration(sleepTime) * time.Second)
 		server.Shutdown()
 	}
 }
