@@ -156,6 +156,49 @@ func ScanHostsRec(timeout, port, elapsed int, outch chan string) {
 	ScanHostsRec(timeout, port, elapsed+1000, outch)
 }
 
+
+//search e.g. "_workstation._tcp" or _services._dns-sd._udp
+//domain e.g. "local"
+//waitTime e.g. -1
+func ScanMDNSCallback(found func(*zeroconf.ServiceEntry) bool, search, domain string, waitTime int) context.Context {
+	// Discover all services on the network (e.g. _workstation._tcp)
+	resolver, err := zeroconf.NewResolver(nil)
+	if err != nil {
+		log.Fatalln("Failed to initialize resolver:", err.Error())
+	}
+
+	entries := make(chan *zeroconf.ServiceEntry)
+
+	var ctx context.Context
+	var cancel context.CancelFunc
+	if waitTime > -1 {
+		ctx, cancel = context.WithTimeout(context.Background(), time.Second*time.Duration(waitTime))
+		defer cancel()
+	} else {
+		ctx, cancel = context.WithCancel(context.Background())
+		defer cancel()
+	}
+	go func(results chan *zeroconf.ServiceEntry) {
+		for entry := range results {
+			log.Printf("ScanMDNS found: %+v\n", entry)
+			contin :=found( entry)
+			if !contin {return }
+			if ctx.Err != nil {
+				return
+			}
+		}
+		log.Println("ScanMDNS: No more entries.")
+	}(entries)
+	err = resolver.Browse(ctx, search, domain, entries)
+	if err != nil {
+		log.Fatalln("Failed to browse:", err.Error())
+	}
+
+	return ctx
+}
+
+
+
 //search e.g. "_workstation._tcp" or _services._dns-sd._udp
 //domain e.g. "local"
 //waitTime e.g. -1
@@ -167,7 +210,7 @@ func ScanMDNS(found chan *zeroconf.ServiceEntry, search, domain string, waitTime
 	}
 
 	entries := make(chan *zeroconf.ServiceEntry)
-	go func(results <-chan *zeroconf.ServiceEntry) {
+	go func(results chan *zeroconf.ServiceEntry) {
 		for entry := range results {
 			log.Printf("ScanMDNS found: %+v\n", entry)
 			found <- entry

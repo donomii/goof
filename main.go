@@ -635,3 +635,36 @@ func ConfFloat64(f map[string]interface{}, key string, default_value float64) fl
 	}
 	return val.(float64)
 }
+
+func WriteMacAgentStart(appName string) {
+
+	execPath, _ := os.Executable()
+	user, _ := user.Current()
+	hDir := user.HomeDir
+
+	ioutil.WriteFile(hDir+"/Library/LaunchAgents/`+appName+`.plist", []byte(Make_agent_plist(appName, execPath)), 0644)
+
+}
+
+func Make_agent_plist(appName, appPath string) string {
+	template := ` <?xml version="1.0" encoding="UTF-8"?>
+ <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0. dtd">
+ <plist version="1.0">
+ <dict>
+     <key>Label</key>
+     <string>` + appName + `</string>
+     <key>Program</key>
+     <string>` + appPath + `</string>
+     <key>ProgramArguments</key>
+     <array>
+         <string>` + appPath + `</string>
+         <string>Public</string>
+     </array>
+     <key>RunAtLoad</key>
+     <true/>
+ </dict>
+ </plist>`
+
+	return template
+
+}
