@@ -30,6 +30,12 @@ import (
 	"time"
 )
 
+
+func Cwd() string {
+	out, _ := os.Getwd()
+	return out
+}
+
 func Shell(cmd string) string {
 	var result string
 	switch runtime.GOOS {
