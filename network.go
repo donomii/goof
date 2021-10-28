@@ -44,7 +44,7 @@ func main() {
 
 func WrappedTraceroute(target string) []string {
 	out := []string{}
-	raw := QC([]string{"traceroute", "-n", "-m", "3", "-q", "1", "-P", "icmp", "8.8.8.8"})
+	raw, _ := QC([]string{"traceroute", "-n", "-m", "3", "-q", "1", "-P", "icmp", "8.8.8.8"})
 	hops := Grep("ms", raw)
 	for _, l := range strings.Split(hops, "\n") {
 		bits := strings.Split(l, "  ")
@@ -156,7 +156,6 @@ func ScanHostsRec(timeout, port, elapsed int, outch chan string) {
 	ScanHostsRec(timeout, port, elapsed+1000, outch)
 }
 
-
 //search e.g. "_workstation._tcp" or _services._dns-sd._udp
 //domain e.g. "local"
 //waitTime e.g. -1
@@ -181,8 +180,10 @@ func ScanMDNSCallback(found func(*zeroconf.ServiceEntry) bool, search, domain st
 	go func(results chan *zeroconf.ServiceEntry) {
 		for entry := range results {
 			log.Printf("ScanMDNS found: %+v\n", entry)
-			contin :=found( entry)
-			if !contin {return }
+			contin := found(entry)
+			if !contin {
+				return
+			}
 			if ctx.Err != nil {
 				return
 			}
@@ -196,8 +197,6 @@ func ScanMDNSCallback(found func(*zeroconf.ServiceEntry) bool, search, domain st
 
 	return ctx
 }
-
-
 
 //search e.g. "_workstation._tcp" or _services._dns-sd._udp
 //domain e.g. "local"
