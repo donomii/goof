@@ -534,9 +534,16 @@ func Grep(search, str string) string {
 	return out
 }
 
+//Cross platform find home (user) directory
 func HomeDirectory() string {
 	user, _ := user.Current()
 	hDir := user.HomeDir
+	return hDir
+}
+
+//Cross platform make path from home directory
+func HomePath(p string) string {
+	hDir := HomeDirectory()+"/" + p
 	return hDir
 }
 
