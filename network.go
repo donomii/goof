@@ -262,7 +262,7 @@ func GetOutboundIP() (localAddr net.IP) {
 //serverPort: e.g. 80
 //name: e.g. "Totally awesome server"
 //payload: will be delivered verbatim to the client
-//sleepTime:  Time between advertisements
+//sleepTime:  Time between advertisements (seconds)
 //logAdvertisement: log each time we advertise
 func AdvertiseMDNS(serverPort int, service, domain, name string, payload []string, sleepTime int, logAdvertisement bool) {
 	for {
