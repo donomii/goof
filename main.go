@@ -36,6 +36,11 @@ func Cwd() string {
 	return out
 }
 
+//Use printf arguments to panic with a message
+func Panicf(format string, a ...interface{}) {
+	panic(fmt.Sprintf(format, a...))
+}
+
 func Shell(cmd string) string {
 	var result string
 	switch runtime.GOOS {
