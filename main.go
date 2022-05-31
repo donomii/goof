@@ -27,13 +27,18 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
 )
-
 
 func Cwd() string {
 	out, _ := os.Getwd()
 	return out
+}
+
+//Use printf arguments to panic with a message
+func Panicf(format string, a ...interface{}) {
+	panic(fmt.Sprintf(format, a...))
 }
 
 func Shell(cmd string) string {
@@ -557,8 +562,19 @@ func HomeDirectory() string {
 
 //Cross platform make path from home directory
 func HomePath(p string) string {
-	hDir := HomeDirectory()+"/" + p
+	hDir := HomeDirectory() + "/" + p
 	return hDir
+}
+
+//Restart the current application
+//Attemtps to read the command line parameters from the current process
+func Restart() {
+	procAttr := new(syscall.ProcAttr)
+	procAttr.Files = []uintptr{0, 1, 2}
+	procAttr.Dir = os.Getenv("PWD")
+	procAttr.Env = os.Environ()
+	exe, _ := os.Executable()
+	syscall.ForkExec(exe, os.Args, procAttr)
 }
 
 //Searches a list of strings, return any that match search.  Case insensitive
