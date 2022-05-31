@@ -36,6 +36,11 @@ func Cwd() string {
 	return out
 }
 
+//Use printf arguments to panic with a message
+func Panicf(format string, a ...interface{}) {
+	panic(fmt.Sprintf(format, a...))
+}
+
 func Shell(cmd string) string {
 	var result string
 	switch runtime.GOOS {
@@ -456,22 +461,22 @@ func Hash_file_md5(filePath string) (string, error) {
 }
 
 //Run a command, wait for it to finish and then return stdout
-func QuickCommand(cmd *exec.Cmd) string {
+func QuickCommand(cmd *exec.Cmd) (string, error) {
 	in := strings.NewReader("")
 	cmd.Stdin = in
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	var err bytes.Buffer
 	cmd.Stderr = &err
-	cmd.Run()
+	res := cmd.Run()
 	//fmt.Printf("Command result: %v\n", res)
 	ret := out.String()
 	//fmt.Println(ret)
-	return ret
+	return ret, res
 }
 
 //Run a command.  The first element is the path to the executable, the rest are program arguments.  Returns stdout
-func QC(strs []string) string {
+func QC(strs []string) (string, error) {
 	cmd := exec.Command(strs[0], strs[1:]...)
 	return QuickCommand(cmd)
 }
@@ -479,17 +484,18 @@ func QC(strs []string) string {
 //Run a command in an interactive shell.  If there isn't a terminal associated with this program, one should be opened for you.
 //
 //The current STDIN/OUT/ERR will be provided to the child process
-func QuickCommandInteractive(cmd *exec.Cmd) {
+func QuickCommandInteractive(cmd *exec.Cmd) error {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Run()
+	return cmd.Run()
 }
 
 //Run a command in an interactive shell.  If there isn't a terminal associated with this program, one should be opened for you.  The first element is the path to the executable, the rest are program arguments.  Returns stdout
-func QCI(strs []string) {
+func QCI(strs []string) error {
 	cmd := exec.Command(strs[0], strs[1:]...)
-	QuickCommandInteractive(cmd)
+	err := QuickCommandInteractive(cmd)
+	return err
 }
 
 //Run a command.  The first arg is the path to the executable, the rest are program args.  Returns stdout and stderr mixed together
