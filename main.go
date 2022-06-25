@@ -33,7 +33,7 @@ import (
 )
 
 func Atoi(s string) int {
-	i, err := strconv.Atoi(s)
+	i, _ := strconv.Atoi(s)
 	return i
 }
 
