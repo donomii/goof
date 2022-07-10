@@ -26,10 +26,16 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
 )
+
+func Atoi(s string) int {
+	i, _ := strconv.Atoi(s)
+	return i
+}
 
 func Cwd() string {
 	out, _ := os.Getwd()
@@ -479,6 +485,17 @@ func QuickCommand(cmd *exec.Cmd) (string, error) {
 func QC(strs []string) (string, error) {
 	cmd := exec.Command(strs[0], strs[1:]...)
 	return QuickCommand(cmd)
+}
+
+//Run a command in an interactive shell.  If there isn't a terminal associated with this program, one should be opened for you.
+//
+//The current STDIN/OUT/ERR will be provided to the child process
+func QuickCommandInteractivePrep(strs []string) *exec.Cmd {
+	cmd := exec.Command(strs[0], strs[1:]...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd
 }
 
 //Run a command in an interactive shell.  If there isn't a terminal associated with this program, one should be opened for you.
