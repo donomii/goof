@@ -58,9 +58,9 @@ func WrappedTraceroute(target string) []string {
 	return out
 }
 
-//Try to find the network interface that is connected to the internet, and get its IP address
-//This does not find the IP of your firewall or WAN connection, just the IP on the network that
-//you are directly connected to
+// Try to find the network interface that is connected to the internet, and get its IP address
+// This does not find the IP of your firewall or WAN connection, just the IP on the network that
+// you are directly connected to
 func ExternalIP() (string, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
@@ -111,12 +111,12 @@ func AllIps() []string {
 	return out
 }
 
-//Attempt to connect to PORT on every IP address in your class C network
+// Attempt to connect to PORT on every IP address in your class C network
 func ScanHosts(timeout, port int, outch chan string) {
 	ScanHostsRec(timeout, port, 0, outch)
 }
 
-//Attempt to connect to PORT on every IP address in your class C network
+// Attempt to connect to PORT on every IP address in your class C network
 func ScanHostsRec(timeout, port, elapsed int, outch chan string) {
 	if timeout > 0 && elapsed > timeout {
 		//panic("Cannot find any server!")
@@ -156,9 +156,9 @@ func ScanHostsRec(timeout, port, elapsed int, outch chan string) {
 	ScanHostsRec(timeout, port, elapsed+1000, outch)
 }
 
-//search e.g. "_workstation._tcp" or _services._dns-sd._udp
-//domain e.g. "local"
-//waitTime e.g. -1
+// search e.g. "_workstation._tcp" or _services._dns-sd._udp
+// domain e.g. "local"
+// waitTime e.g. -1
 func ScanMDNSCallback(found func(*zeroconf.ServiceEntry) bool, search, domain string, waitTime int) context.Context {
 	// Discover all services on the network (e.g. _workstation._tcp)
 	resolver, err := zeroconf.NewResolver(nil)
@@ -198,9 +198,9 @@ func ScanMDNSCallback(found func(*zeroconf.ServiceEntry) bool, search, domain st
 	return ctx
 }
 
-//search e.g. "_workstation._tcp" or _services._dns-sd._udp
-//domain e.g. "local"
-//waitTime e.g. -1
+// search e.g. "_workstation._tcp" or _services._dns-sd._udp
+// domain e.g. "local"
+// waitTime e.g. -1
 func ScanMDNS(found chan *zeroconf.ServiceEntry, search, domain string, waitTime int) {
 	// Discover all services on the network (e.g. _workstation._tcp)
 	resolver, err := zeroconf.NewResolver(nil)
@@ -233,16 +233,16 @@ func ScanMDNS(found chan *zeroconf.ServiceEntry, search, domain string, waitTime
 	<-ctx.Done()
 }
 
-//search e.g. "_workstation._tcp" or _services._dns-sd._udp
-//domain e.g. "local"
-//waitTime e.g. 10
+// search e.g. "_workstation._tcp" or _services._dns-sd._udp
+// domain e.g. "local"
+// waitTime e.g. 10
 func StartMDNSscan(search, domain string, waitTime int) chan *zeroconf.ServiceEntry {
 	found := make(chan *zeroconf.ServiceEntry, 100)
 	go ScanMDNS(found, search, domain, waitTime)
 	return found
 }
 
-//Attempt to get the primary network address
+// Attempt to get the primary network address
 func GetOutboundIP() (localAddr net.IP) {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
@@ -257,13 +257,13 @@ func GetOutboundIP() (localAddr net.IP) {
 	return
 }
 
-//service e.g. "_workstation._tcp"
-//domain e.g. "local"
-//serverPort: e.g. 80
-//name: e.g. "Totally awesome server"
-//payload: will be delivered verbatim to the client
-//sleepTime:  Time between advertisements (seconds)
-//logAdvertisement: log each time we advertise
+// service e.g. "_workstation._tcp"
+// domain e.g. "local"
+// serverPort: e.g. 80
+// name: e.g. "Totally awesome server"
+// payload: will be delivered verbatim to the client
+// sleepTime:  Time between advertisements (seconds)
+// logAdvertisement: log each time we advertise
 func AdvertiseMDNS(serverPort int, service, domain, name string, payload []string, sleepTime int, logAdvertisement bool) {
 	for {
 
@@ -280,7 +280,23 @@ func AdvertiseMDNS(serverPort int, service, domain, name string, payload []strin
 	}
 }
 
-//Register programPath with Windows UAC so it can listen on network ports.  programName is a descriptive name
+func AdvertiseMDNSWithFunc(serverPort int, service, domain, name string, payloadfunc func() []string, sleepTime int, logAdvertisement bool) {
+	for {
+
+		if logAdvertisement {
+			log.Printf("Published service - Name: %v, Type: %v, Domain: %v, Port: %v\n", name, service, domain, serverPort)
+		}
+		server, err := zeroconf.Register(name, service, domain, serverPort, payloadfunc(), nil)
+		if err != nil {
+			panic(err)
+		}
+
+		time.Sleep(time.Duration(sleepTime) * time.Second)
+		server.Shutdown()
+	}
+}
+
+// Register programPath with Windows UAC so it can listen on network ports.  programName is a descriptive name
 func OpenFirewall(programPath, programName string) {
 	ioutil.WriteFile("firewall.bat", firewallbat(programPath, programName), 0644) //FIXME temp filenames
 	QC([]string{"firewall.bat"})
