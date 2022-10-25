@@ -31,6 +31,22 @@ import (
 	"time"
 )
 
+func FileContains(filename string, search string) bool {
+	f, err := os.Open(filename)
+	if err != nil {
+		log.Println("Error opening file:", err)
+		return false
+	}
+	defer f.Close()
+
+	contents, err := ioutil.ReadFile(filename)
+	if err != nil {
+		log.Println("Error reading file:", err)
+		return false
+	}
+	return strings.Contains(string(contents), search)
+}
+
 func Atoi(s string) int {
 	i, _ := strconv.Atoi(s)
 	return i
