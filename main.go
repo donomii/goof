@@ -31,6 +31,23 @@ import (
 	"time"
 )
 
+//If string is longer than length, return the first length characters, otherwise return the string
+func ShortenString(length int, s string) string {
+	if len(s) > length {
+		return s[:length]
+	}
+	return s
+}
+
+//If string is longer than length, return the first length-3 characters and ..., otherwise return the string
+func ShortenStringWithEllipsis(length int, s string) string {
+	if len(s) > length-3 {
+		return s[:length-3] + "..."
+	}
+	return s
+}
+
+//Open a file, search it for the given string
 func FileContains(filename string, search string) bool {
 	f, err := os.Open(filename)
 	if err != nil {
