@@ -64,11 +64,13 @@ func FileContains(filename string, search string) bool {
 	return strings.Contains(string(contents), search)
 }
 
+// String to int, single return value
 func Atoi(s string) int {
 	i, _ := strconv.Atoi(s)
 	return i
 }
 
+// Current working directory
 func Cwd() string {
 	out, _ := os.Getwd()
 	return out
@@ -84,6 +86,7 @@ func Panicf(format string, a ...interface{}) {
 	panic(fmt.Sprintf(format, a...))
 }
 
+// Run cmd as a shell command, return the output
 func Shell(cmd string) string {
 	var result string
 	switch runtime.GOOS {
@@ -103,8 +106,11 @@ func Shell(cmd string) string {
 	return result
 }
 
-// Return an array of integers from min to max, so you can range over them
+func Sequence(start, end int) []int {
+	return Seq(start, end)
+}
 
+// Return an array of integers from min to max, so you can range over them
 func Seq(min, max int) []int {
 	size := max - min + 1
 	if size < 1 {
