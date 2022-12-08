@@ -1,4 +1,4 @@
-//A collection of functions I use very often
+// A collection of functions I use very often
 //
 // This is a convenient place to store all the functions that I use in a lot of programs.  They were useful for me, so they might be useful for you too.
 package goof
@@ -74,7 +74,12 @@ func Cwd() string {
 	return out
 }
 
-//Use printf arguments to panic with a message
+// Return true if x is odd
+func Odd(x int) bool {
+	return x%2 == 1
+}
+
+// Use printf arguments to panic with a message
 func Panicf(format string, a ...interface{}) {
 	panic(fmt.Sprintf(format, a...))
 }
@@ -112,8 +117,8 @@ func Seq(min, max int) []int {
 	return a
 }
 
-//Opens a file or stdin (if filename is "").  Can open compressed files, and can decompress stdin.
-//Compression is "bz2" or "gz".  Pass "" as a filename to read stdin.
+// Opens a file or stdin (if filename is "").  Can open compressed files, and can decompress stdin.
+// Compression is "bz2" or "gz".  Pass "" as a filename to read stdin.
 func OpenInput(filename string, compression string) io.Reader {
 	var f *os.File
 	var err error
@@ -170,12 +175,12 @@ func OpenBufferedInput(filename string, compression string) *bufio.Reader {
 	return bufio.NewReaderSize(OpenInput(filename, compression), 134217728)
 }
 
-//Takes a (c-style) filehandle, and returns go queues that let you write to and read from that handle
-//Bytes will be read from the wrapped handle and written to the channels as quickly as possible, but there are no guarantees on speed or how many bytes
-//are delivered per message in the channel.  This routine does no buffering, however the wrapped process can use buffers, so you still might not get prompt
-//delivery of your data.  In general, most programs will use line buffering unless you can force them not to.
+// Takes a (c-style) filehandle, and returns go queues that let you write to and read from that handle
+// Bytes will be read from the wrapped handle and written to the channels as quickly as possible, but there are no guarantees on speed or how many bytes
+// are delivered per message in the channel.  This routine does no buffering, however the wrapped process can use buffers, so you still might not get prompt
+// delivery of your data.  In general, most programs will use line buffering unless you can force them not to.
 //
-//Channel length is the buffer length of the go pipes
+// Channel length is the buffer length of the go pipes
 func WrapHandle(fileHandle uintptr, channel_length int) (chan []byte, chan []byte) {
 	stdinQ := make(chan []byte, channel_length)
 	stdoutQ := make(chan []byte, channel_length)
@@ -212,24 +217,24 @@ func WrapHandle(fileHandle uintptr, channel_length int) (chan []byte, chan []byt
 	return stdinQ, stdoutQ
 }
 
-//Starts a program, in the background, and returns three Go pipes of type (chan []byte), which are connected to the process's STDIN, STDOUT and STDERR.
-//Bytes will be read from the wrapped program and written to the channels as quickly as possible, but there are no guarantees on speed or how many bytes
-//are delivered per message in the channel.  This routine does no buffering, however the wrapped process can use buffers, so you still might not get prompt
-//delivery of your data.  In general, most programs will use line buffering unless you can force them not to.
+// Starts a program, in the background, and returns three Go pipes of type (chan []byte), which are connected to the process's STDIN, STDOUT and STDERR.
+// Bytes will be read from the wrapped program and written to the channels as quickly as possible, but there are no guarantees on speed or how many bytes
+// are delivered per message in the channel.  This routine does no buffering, however the wrapped process can use buffers, so you still might not get prompt
+// delivery of your data.  In general, most programs will use line buffering unless you can force them not to.
 //
-//Channel length is the buffer length of the go pipes
+// Channel length is the buffer length of the go pipes
 func WrapProc(pathToProgram string, channel_length int) (chan []byte, chan []byte, chan []byte) {
 	cmd := exec.Command(pathToProgram)
 
 	return WrapCmd(cmd, channel_length)
 }
 
-//Starts a program, in the background, and returns three Go pipes of type (chan []byte), which are connected to the process's STDIN, STDOUT and STDERR.
-//Bytes will be read from the wrapped program and written to the channels as quickly as possible, but there are no guarantees on speed or how many bytes
-//are delivered per message in the channel.  This routine does no buffering, however the wrapped process can use buffers, so you still might not get prompt
-//delivery of your data.  In general, most programs will use line buffering unless you can force them not to.
+// Starts a program, in the background, and returns three Go pipes of type (chan []byte), which are connected to the process's STDIN, STDOUT and STDERR.
+// Bytes will be read from the wrapped program and written to the channels as quickly as possible, but there are no guarantees on speed or how many bytes
+// are delivered per message in the channel.  This routine does no buffering, however the wrapped process can use buffers, so you still might not get prompt
+// delivery of your data.  In general, most programs will use line buffering unless you can force them not to.
 //
-//Channel length is the buffer length of the go pipes
+// Channel length is the buffer length of the go pipes
 func WrapCmd(cmd *exec.Cmd, channel_length int) (chan []byte, chan []byte, chan []byte) {
 
 	stdinQ := make(chan []byte, channel_length)
@@ -376,7 +381,7 @@ func SimpleGet(path string) ([]byte, error) {
 	return bodyText, nil
 }
 
-//Returns the directory this executable is in
+// Returns the directory this executable is in
 func ExecutablePath() string {
 	ex, err := os.Executable()
 	if err != nil {
@@ -386,12 +391,12 @@ func ExecutablePath() string {
 	return exPath
 }
 
-//Delete a trailing /n, if it exists
+// Delete a trailing /n, if it exists
 func Chomp(s string) string {
 	return strings.TrimSuffix(s, "\n")
 }
 
-//Return contents of file.  It's just ioutil.ReadFile, but with only one return value, and instead it will panic on any error
+// Return contents of file.  It's just ioutil.ReadFile, but with only one return value, and instead it will panic on any error
 func CatFile(path string) []byte {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -400,7 +405,7 @@ func CatFile(path string) []byte {
 	return data
 }
 
-//Does this file or directory exist?
+// Does this file or directory exist?
 func Exists(path string) bool {
 	if _, err := os.Stat(path); err == nil {
 		//fmt.Println(path, "Exists")
@@ -410,7 +415,7 @@ func Exists(path string) bool {
 	}
 }
 
-//Write text at the end of a file.  Note that the file is opened and closed on each call, so it's not a good choice for logging..
+// Write text at the end of a file.  Note that the file is opened and closed on each call, so it's not a good choice for logging..
 func AppendStringToFile(path, text string) error {
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
@@ -425,7 +430,7 @@ func AppendStringToFile(path, text string) error {
 	return nil
 }
 
-//List all files in a directory, and recursively in its subdirectories
+// List all files in a directory, and recursively in its subdirectories
 func LslR(dir string) []string {
 	out := []string{}
 	walkHandler := func(path string, info os.FileInfo, err error) error {
@@ -436,7 +441,7 @@ func LslR(dir string) []string {
 	return out
 }
 
-//List all files in a directory
+// List all files in a directory
 func Ls(dir string) []string {
 	//out := []string{".."}
 	out := []string{}
@@ -447,7 +452,7 @@ func Ls(dir string) []string {
 	return out
 }
 
-//Is this path a directory?  Return error if error occurs (e.g. does not exist)
+// Is this path a directory?  Return error if error occurs (e.g. does not exist)
 func IsDirr(pth string) (bool, error) {
 	fi, err := os.Stat(pth)
 	if err != nil {
@@ -457,7 +462,7 @@ func IsDirr(pth string) (bool, error) {
 	return fi.Mode().IsDir(), nil
 }
 
-//Is this path a directory?  Any error results in false
+// Is this path a directory?  Any error results in false
 func IsDir(path string) bool {
 	f, err := os.Stat(path)
 	if err != nil {
@@ -466,7 +471,7 @@ func IsDir(path string) bool {
 	return f != nil && f.IsDir()
 }
 
-//Calculate the MD5sum of a file
+// Calculate the MD5sum of a file
 func Hash_file_md5(filePath string) (string, error) {
 	//Initialize variable returnMD5String now in case an error has to be returned
 	var returnMD5String string
@@ -498,7 +503,7 @@ func Hash_file_md5(filePath string) (string, error) {
 
 }
 
-//Run a command, wait for it to finish and then return stdout
+// Run a command, wait for it to finish and then return stdout
 func QuickCommand(cmd *exec.Cmd) (string, error) {
 	in := strings.NewReader("")
 	cmd.Stdin = in
@@ -509,19 +514,22 @@ func QuickCommand(cmd *exec.Cmd) (string, error) {
 	res := cmd.Run()
 	//fmt.Printf("Command result: %v\n", res)
 	ret := out.String()
+	if res != nil {
+		return err.String(), res
+	}
 	//fmt.Println(ret)
 	return ret, res
 }
 
-//Run a command.  The first element is the path to the executable, the rest are program arguments.  Returns stdout
+// Run a command.  The first element is the path to the executable, the rest are program arguments.  Returns stdout
 func QC(strs []string) (string, error) {
 	cmd := exec.Command(strs[0], strs[1:]...)
 	return QuickCommand(cmd)
 }
 
-//Run a command in an interactive shell.  If there isn't a terminal associated with this program, one should be opened for you.
+// Run a command in an interactive shell.  If there isn't a terminal associated with this program, one should be opened for you.
 //
-//The current STDIN/OUT/ERR will be provided to the child process
+// The current STDIN/OUT/ERR will be provided to the child process
 func QuickCommandInteractivePrep(strs []string) *exec.Cmd {
 	cmd := exec.Command(strs[0], strs[1:]...)
 	cmd.Stdin = os.Stdin
@@ -530,9 +538,9 @@ func QuickCommandInteractivePrep(strs []string) *exec.Cmd {
 	return cmd
 }
 
-//Run a command in an interactive shell.  If there isn't a terminal associated with this program, one should be opened for you.
+// Run a command in an interactive shell.  If there isn't a terminal associated with this program, one should be opened for you.
 //
-//The current STDIN/OUT/ERR will be provided to the child process
+// The current STDIN/OUT/ERR will be provided to the child process
 func QuickCommandInteractive(cmd *exec.Cmd) error {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -540,14 +548,14 @@ func QuickCommandInteractive(cmd *exec.Cmd) error {
 	return cmd.Run()
 }
 
-//Run a command in an interactive shell.  If there isn't a terminal associated with this program, one should be opened for you.  The first element is the path to the executable, the rest are program arguments.  Returns stdout
+// Run a command in an interactive shell.  If there isn't a terminal associated with this program, one should be opened for you.  The first element is the path to the executable, the rest are program arguments.  Returns stdout
 func QCI(strs []string) error {
 	cmd := exec.Command(strs[0], strs[1:]...)
 	err := QuickCommandInteractive(cmd)
 	return err
 }
 
-//Run a command.  The first arg is the path to the executable, the rest are program args.  Returns stdout and stderr mixed together
+// Run a command.  The first arg is the path to the executable, the rest are program args.  Returns stdout and stderr mixed together
 func Command(cmd string, args []string) string {
 	//log.Printf("Running '%v', '%v'", cmd, args)
 	out, err := exec.Command(cmd, args...).CombinedOutput()
@@ -577,7 +585,7 @@ func Clamp(a, min, max int) int {
 	return a
 }
 
-//Searches a string to see if any lines in it match search
+// Searches a string to see if any lines in it match search
 func Grep(search, str string) string {
 	var out string
 	strs := strings.Split(str, "\n")
@@ -589,20 +597,20 @@ func Grep(search, str string) string {
 	return out
 }
 
-//Cross platform find home (user) directory
+// Cross platform find home (user) directory
 func HomeDirectory() string {
 	user, _ := user.Current()
 	hDir := user.HomeDir
 	return hDir
 }
 
-//Cross platform make path from home directory
+// Cross platform make path from home directory
 func HomePath(p string) string {
 	hDir := HomeDirectory() + "/" + p
 	return hDir
 }
 
-//Searches a list of strings, return any that match search.  Case insensitive
+// Searches a list of strings, return any that match search.  Case insensitive
 func ListGrep(search string, strs []string) []string {
 	var out = []string{}
 	for _, v := range strs {
@@ -613,7 +621,7 @@ func ListGrep(search string, strs []string) []string {
 	return out
 }
 
-//Searches a list of strings, return any that don't match search.  Case insensitive
+// Searches a list of strings, return any that don't match search.  Case insensitive
 func ListGrepInv(search string, strs []string) []string {
 	var out = []string{}
 	for _, v := range strs {
@@ -624,18 +632,18 @@ func ListGrepInv(search string, strs []string) []string {
 	return out
 }
 
-//ASCII id -> string
+// ASCII id -> string
 func ToCharStr(i int) string {
 	r := rune('A' - 1 + i)
 	return fmt.Sprintf("%v", r)
 }
 
-//ASCII id -> char
+// ASCII id -> char
 func ToChar(i int) rune {
 	return rune('a' + i)
 }
 
-//Build a path to a config file, from the default config location
+// Build a path to a config file, from the default config location
 func ConfigFilePath(filename string) string {
 	user, _ := user.Current()
 	hDir := user.HomeDir
@@ -643,7 +651,7 @@ func ConfigFilePath(filename string) string {
 	return confPath
 }
 
-//Attempt to read config from filename.  If filename does not exist, write default_config to the file and parse that data.
+// Attempt to read config from filename.  If filename does not exist, write default_config to the file and parse that data.
 func ReadOrMakeConfig(filename string, default_config string) map[string]interface{} {
 	var err error
 	var data []byte
