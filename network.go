@@ -1,7 +1,6 @@
 package goof
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -11,8 +10,6 @@ import (
 	"os"
 	"strings"
 	"time"
-
-	"github.com/grandcat/zeroconf"
 )
 
 /*
@@ -156,92 +153,6 @@ func ScanHostsRec(timeout, port, elapsed int, outch chan string) {
 	ScanHostsRec(timeout, port, elapsed+1000, outch)
 }
 
-// search e.g. "_workstation._tcp" or _services._dns-sd._udp
-// domain e.g. "local"
-// waitTime e.g. -1
-func ScanMDNSCallback(found func(*zeroconf.ServiceEntry) bool, search, domain string, waitTime int) context.Context {
-	// Discover all services on the network (e.g. _workstation._tcp)
-	resolver, err := zeroconf.NewResolver(nil)
-	if err != nil {
-		log.Fatalln("Failed to initialize resolver:", err.Error())
-	}
-
-	entries := make(chan *zeroconf.ServiceEntry)
-
-	var ctx context.Context
-	var cancel context.CancelFunc
-	if waitTime > -1 {
-		ctx, cancel = context.WithTimeout(context.Background(), time.Second*time.Duration(waitTime))
-		defer cancel()
-	} else {
-		ctx, cancel = context.WithCancel(context.Background())
-		defer cancel()
-	}
-	go func(results chan *zeroconf.ServiceEntry) {
-		for entry := range results {
-			log.Printf("ScanMDNS found: %+v\n", entry)
-			contin := found(entry)
-			if !contin {
-				return
-			}
-			if ctx.Err != nil {
-				return
-			}
-		}
-		log.Println("ScanMDNS: No more entries.")
-	}(entries)
-	err = resolver.Browse(ctx, search, domain, entries)
-	if err != nil {
-		log.Fatalln("Failed to browse:", err.Error())
-	}
-
-	return ctx
-}
-
-// search e.g. "_workstation._tcp" or _services._dns-sd._udp
-// domain e.g. "local"
-// waitTime e.g. -1
-func ScanMDNS(found chan *zeroconf.ServiceEntry, search, domain string, waitTime int) {
-	// Discover all services on the network (e.g. _workstation._tcp)
-	resolver, err := zeroconf.NewResolver(nil)
-	if err != nil {
-		log.Fatalln("Failed to initialize resolver:", err.Error())
-	}
-
-	entries := make(chan *zeroconf.ServiceEntry)
-	go func(results chan *zeroconf.ServiceEntry) {
-		for entry := range results {
-			log.Printf("ScanMDNS found: %+v\n", entry)
-			found <- entry
-		}
-		log.Println("ScanMDNS: No more entries.")
-	}(entries)
-	var ctx context.Context
-	var cancel context.CancelFunc
-	if waitTime > -1 {
-		ctx, cancel = context.WithTimeout(context.Background(), time.Second*time.Duration(waitTime))
-		defer cancel()
-	} else {
-		ctx, cancel = context.WithCancel(context.Background())
-		defer cancel()
-	}
-	err = resolver.Browse(ctx, search, domain, entries)
-	if err != nil {
-		log.Fatalln("Failed to browse:", err.Error())
-	}
-
-	<-ctx.Done()
-}
-
-// search e.g. "_workstation._tcp" or _services._dns-sd._udp
-// domain e.g. "local"
-// waitTime e.g. 10
-func StartMDNSscan(search, domain string, waitTime int) chan *zeroconf.ServiceEntry {
-	found := make(chan *zeroconf.ServiceEntry, 100)
-	go ScanMDNS(found, search, domain, waitTime)
-	return found
-}
-
 // Attempt to get the primary network address
 func GetOutboundIP() (localAddr net.IP) {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
@@ -255,45 +166,6 @@ func GetOutboundIP() (localAddr net.IP) {
 	localAddr = stuff.IP
 
 	return
-}
-
-// service e.g. "_workstation._tcp"
-// domain e.g. "local"
-// serverPort: e.g. 80
-// name: e.g. "Totally awesome server"
-// payload: will be delivered verbatim to the client
-// sleepTime:  Time between advertisements (seconds)
-// logAdvertisement: log each time we advertise
-func AdvertiseMDNS(serverPort int, service, domain, name string, payload []string, sleepTime int, logAdvertisement bool) {
-	for {
-
-		if logAdvertisement {
-			log.Printf("Published service - Name: %v, Type: %v, Domain: %v, Port: %v\n", name, service, domain, serverPort)
-		}
-		server, err := zeroconf.Register(name, service, domain, serverPort, payload, nil)
-		if err != nil {
-			panic(err)
-		}
-
-		time.Sleep(time.Duration(sleepTime) * time.Second)
-		server.Shutdown()
-	}
-}
-
-func AdvertiseMDNSWithFunc(serverPort int, service, domain, name string, payloadfunc func() []string, sleepTime int, logAdvertisement bool) {
-	for {
-
-		if logAdvertisement {
-			log.Printf("Published service - Name: %v, Type: %v, Domain: %v, Port: %v\n", name, service, domain, serverPort)
-		}
-		server, err := zeroconf.Register(name, service, domain, serverPort, payloadfunc(), nil)
-		if err != nil {
-			panic(err)
-		}
-
-		time.Sleep(time.Duration(sleepTime) * time.Second)
-		server.Shutdown()
-	}
 }
 
 // Register programPath with Windows UAC so it can listen on network ports.  programName is a descriptive name
