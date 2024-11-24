@@ -1,5 +1,5 @@
 // errors.go
-package main
+package goof
 
 import (
     "fmt"
