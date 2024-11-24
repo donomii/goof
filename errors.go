@@ -145,13 +145,3 @@ func WrapErrorf(err error, format string, args ...interface{}) error {
     return WrapError(err, context)
 }
 
-// LogError logs an error with full context information
-func LogError(err error) {
-    if err == nil {
-        return
-    }
-    
-    if verbose {
-        fmt.Fprintf(os.Stderr, "%+v\n", err)
-    }
-}
